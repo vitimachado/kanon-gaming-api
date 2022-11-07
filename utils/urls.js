@@ -1,6 +1,7 @@
 const urlsCountries = {
   countryByName: "/api/v1/countrybyname",
-  countriesbynames: "/api/v1/countriesbynames"
+  countriesbynames: "/api/v1/countriesbynames",
+  allCountries: "/api/v1/allCountries"
 };
 
 const apiUBaseUrlCountries = "https://restcountries.com/v3.1"

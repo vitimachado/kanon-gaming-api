@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 const { promisify } = require("util");
 const { checkIfStringStartsWith } = require("../utils/strings");
 
-const ignorePaths = ['/api/v1/countrybyname', '/api/v1/countriesbynames']
+const ignorePaths = ['/api/v1/countrybyname', '/api/v1/countriesbynames', '/api/v1/allCountries']
 
 module.exports = async (req, res, next) => {
   const authHeader = req.headers.authorization;

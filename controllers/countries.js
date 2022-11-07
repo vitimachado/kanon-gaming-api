@@ -3,6 +3,19 @@ const axios = require('axios');
 const { returnSuccess } = require('../utils/httpUtil');
 const { apiUrlsCountries } = require('../utils/urls');
 
+exports.getAllCountries = function(req, res) {
+  console.log('getAllCountries');
+  axios.get(apiUrlsCountries.allCountries)
+  .then(response => {
+    const countryData = response.data;
+    console.log(countryData);
+    returnSuccess(res, { countries: getCountriesData(countryData) })
+  })
+  .catch(error => {
+    console.log(error.code);
+  });
+};
+
 exports.countryByName = function(req, res) {
   console.log('countryByName', req.query.countryName);
   axios.get(apiUrlsCountries.countryByName + req.query.countryName)
@@ -34,5 +47,20 @@ const getCountriesData = (data) => {
   const getData = (countryData) =>  {
     return { name: countryData.name.common, flag: countryData.flags.svg }
   }
-  return data?.length > 1 ? data.map(country => getData(country)) : getData(data[0]);
+  return data?.length > 1 ? 
+          data.map(country => getData(country)).sort((a, b) => compareStrings(a, b, 'name')) :
+          getData(data[0]);
+}
+
+const compareStrings = (a, b, ref) => {
+  let fa = a[ref].toLowerCase(),
+      fb = b[ref].toLowerCase();
+
+  if (fa < fb) {
+      return -1;
+  }
+  if (fa > fb) {
+      return 1;
+  }
+  return 0;
 }

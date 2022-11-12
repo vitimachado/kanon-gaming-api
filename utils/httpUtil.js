@@ -1,12 +1,12 @@
-function returnSuccess(res, data) {
-  return res.status(200).json({statusCode: "200", data });
+function returnSuccess(res, statusCode, data) {
+  return res.status(statusCode).json({ statusCode, data });
 }
 
-function returnErrorBadRequest(res) {
-  return res.status(400).json({statusCode: "400", error: "Bad Request" });
+function returnErrorRequest(res, statusCode, error) {
+  return res.status(statusCode).json({ statusCode, error });
 }
 
 module.exports = {
   returnSuccess,
-  returnErrorBadRequest
+  returnErrorRequest
 };

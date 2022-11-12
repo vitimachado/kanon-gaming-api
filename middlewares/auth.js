@@ -1,32 +1,32 @@
 const jwt = require("jsonwebtoken");
 const { promisify } = require("util");
+const { verifyTokenExpirated } = require("../helpers");
+const { returnErrorRequest } = require("../utils/httpUtil");
 const { checkIfStringStartsWith } = require("../utils/strings");
+const { urlsCountries, urlsUsers } = require("../utils/urls");
 
-const ignorePaths = ['/api/v1/countrybyname', '/api/v1/countriesbynames', '/api/v1/allCountries']
+const ignorePaths = [
+  urlsCountries.countryByName, urlsCountries.countriesbynames, urlsCountries.allCountries,
+  urlsUsers.user_register, urlsUsers.user_authenticate, urlsUsers.user_getUserByToken]
 
 module.exports = async (req, res, next) => {
   const authHeader = req.headers.authorization;
-console.log('authHeader', req.originalUrl)
 
-  if(checkIfStringStartsWith(req.originalUrl, ignorePaths)) return next();  
-  //return next();  
+  if(checkIfStringStartsWith(req.originalUrl, ignorePaths)) return next();
   if (!authHeader) {
-    return res.status(401).send({ error: "Nenhuma token enviada" });
+    return returnErrorRequest(res, 401, "Not Authorized");
   }
 
-  const [scheme, token] = authHeader.split(" ");
-
   try {
-    const decoded = await promisify(jwt.verify)(token, "secret150");
+    const decoded = await promisify(jwt.verify)(authHeader, "secret150");
 
-    req.userId = decoded.id;
-    req.username = decoded.username;
-    res.userId = decoded.id;
-    res.username = decoded.username;
-    //console.log('rrrrrrreeeeeeesssssssssss+', res)
+    console.log('rrrrrrreeeeeeesssssssssss+', decoded, decoded.exp * 1000 < new Date().getTime())
+    if (verifyTokenExpirated(decoded)) {
+      return returnErrorRequest(res, 401, "Token expired");
+    }
 
     return next();
   } catch (err) {
-    return res.status(401).send({ error: "Token inválida" });
+    return returnErrorRequest(res, 401, "Token invalid.");
   }
 };

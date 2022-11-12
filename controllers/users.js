@@ -1,91 +1,73 @@
-const UserModel = require('../models/user');
+const { hashPassword, compareHash, generateToken, verifyToken, verifyTokenExpirated } = require('../helpers');
+const { UserModel } = require('../models/user');
+const { returnErrorRequest, returnSuccess } = require('../utils/httpUtil');
 
-exports.register = function(req, res) {    
+exports.register = async (req, res) => {  
+    const { name, email, password } = req.body.data;
 
-    console.log('register', req.body.data.password);
-    const { nome, password } = req.body.data;
+    const user = await UserModel.findOne({ email }).exec();
+    console.log('register', user);
+    if(user != null) {
+        res.status(409).json({statusCode: "409", error: "This email is already exists." });
+        return;
+    }
 
-    // UserModel.hashPassword(password)
-    // .then(hash => {
-    //     console.log('register hash', hash);
-        
-    //     findUser(nome, null)
-    //     .then(user => {
-    //         console.log('findUser(nome, password)', user);
-    //         if(user == null) {
-    //             UserModel.saveUser({ nome, hash, creationDate: new Date(), likes: [], votes: {ups:[], downs:[]} })
-    //             .then(user => res.status(200).json({statusCode: "201", data: user }) )   
-    //             .catch(err => {
-    //                 console.log('Error', err);
-    //                 res.status(409).json({statusCode: "409", data: "Nome já cadastrado." });
-    //             });            
-    //         }
-    //         else  res.status(409).json({statusCode: "409", data: "Nome já cadastrado." });
-    //     } );
-    // } )
-    // .catch(err => {
-    //     console.log('Error', err);
-    //     res.status(409).json({statusCode: "409", data: "Nome já cadastrado." });
-    // });
+    hashPassword(password)
+    .then(hash => {
+        console.log('register hash', hash);
+        UserModel.create({ name, email, password: hash})
+        .then(data => {
+            console.log(data);
+            res.status(200).json({statusCode: "200", data });
+        });
+    } )
+    .catch(err => {
+        console.log('Error', err);
+        res.status(400).json({statusCode: "400", error: "Unable to save user." });
+    });
 };
 
-exports.authenticate = function(req, res) {    
-
-    console.log('authenticate', req.body.data.password);
-    const { nome, password } = req.body.data;
-
-    // findUser(nome, null)
-    // .then(user => {
-    //     console.log('findUser(nome, password)', user);
-    //     if(user && UserModel.compareHash(user[0].hash, password))  res.status(202).json({statusCode: "202", data: { ...user[0], token: UserModel.generateToken(user[0].id, user[0].nome) } });
-    //     else res.status(409).json({statusCode: "409", data: "Usuário não cadastrado." });
-    // } );
+exports.authenticate = function(req, res) {
+    const { email, password } = req.body.data;
+    findUserAndRespond(res, email, password);
 };
 
-exports.verifyToken = function(req, res) {    
-
-    console.log('verifyToken', req.body.data);
-    // const token = req.body.data;
-    // UserModel.verifyToken(token)
-    // .then(tokenRes => {
-    //     console.log('verifyToken 1', tokenRes);
-    //     if(tokenRes && tokenRes.username) res.status(202).json({statusCode: "202", data:  { ...tokenRes } });
-    //     else res.status(200).json({statusCode: "200", data:  {} });
-    // } )
-    // .catch((error) => { res.status(200).json({statusCode: "200", data:  {} }) });
+exports.getUserByToken = function(req, res) {
+    const token = req.headers.authorization;
+    console.log('\n\n\ngetUserByToken 1', req.headers.authorization);
+    verifyToken(token)
+    .then(tokenRes => findUserAndRespond(res, tokenRes.email, null, true))
+    .catch((error) => { res.status(401).json({statusCode: "401", error: "Token not ok." }) });
 };
 
-exports.findUserById = function(id) {    
-    
-    console.log('findUserById function', id);
-
-    // return UserModel.searchDocument('users', id, (doc) => {
-    //     console.log(doc.id)
-    //     return { id: doc.id, ...doc.data() }//{ id: doc.data().id, keywords: doc.data().keywords }
-    // }).then(data => {
-    //         console.log('getuserById', data);
-    //         return data;
-    //     }        
-    // ).catch(err => {
-    //     console.log('Error', err);
-    //     return null;
-    // });
+exports.verifyUserToken = function(req, res) {
+    const token = req.headers.authorization;
+    console.log('verifyToken 1', req.headers.authorization);
+    verifyToken(token)
+    .then(tokenRes => {
+        delete tokenRes._id;
+        if(tokenRes && tokenRes.email && !verifyTokenExpirated(tokenRes))
+          res.status(202).json({statusCode: "202", data:  { ...tokenRes } });
+        else res.status(401).json({statusCode: "401", error: "Session expired." });
+    } )
+    .catch((error) => { res.status(401).json({statusCode: "401", error: "Token not ok." }) });
 };
 
-findUser = function(nome, password) {    
-    
-    let queryPassword = password ? ['password', '==', password] : null;
-    console.log('findUser function', nome, password, queryPassword);
+exports.findUser = (email) => {
+  return UserModel.findOne({ email }, { createdAt: 0, _v: 0 })
+}
 
-    // return UserModel.searchCollection('users', ['nome', '==', nome], queryPassword, (doc) => {
-    //     console.log(doc.id)
-    //     return { id: doc.id, ...doc.data() }//{ id: doc.data().id, keywords: doc.data().keywords }
-    // }).then(data => {
-    //         console.log('getuser', data);
-    //         return data;
-    //     }        
-    // ).catch(err => {
-    //     console.log('Error', err);
-    //     return null;
-    // });
-};
+const findUserAndRespond = (res, email, password, notCheckPassword) => {
+  this.findUser(email)
+  .then(user => {
+      if(user && (notCheckPassword || compareHash(user.password, password))) {
+        returnSuccess(res, 202, {
+          user: {
+            coins: user.coins, email: user.email, name: user.name,
+          },
+          token: generateToken(user._id, user.email) 
+        });
+      }
+      else returnErrorRequest(res, 404, "The user not exist.");
+  } );
+}

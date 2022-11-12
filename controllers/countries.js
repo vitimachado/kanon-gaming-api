@@ -9,7 +9,7 @@ exports.getAllCountries = function(req, res) {
   .then(response => {
     const countryData = response.data;
     console.log(countryData);
-    returnSuccess(res, { countries: getCountriesData(countryData) })
+    returnSuccess(res, 200, { countries: getCountriesData(countryData) })
   })
   .catch(error => {
     console.log(error.code);
@@ -22,7 +22,7 @@ exports.countryByName = function(req, res) {
   .then(response => {
     const countryData = response.data;
     console.log(countryData);
-    returnSuccess(res, { country: getCountriesData(countryData) })
+    returnSuccess(res, 200, { country: getCountriesData(countryData) })
   })
   .catch(error => {
     console.log(error.code);
@@ -36,7 +36,7 @@ exports.countriesByNames = function(req, res) {
     .then(response => {
       const countryData = response.data;
       const countries = getCountriesData(countryData).filter(country => countryNames.includes(country.name))
-      returnSuccess(res, { countries })
+      returnSuccess(res, 200, { countries })
     })
     .catch(error => {
       console.log(error.code);

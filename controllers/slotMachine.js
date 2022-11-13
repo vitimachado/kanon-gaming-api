@@ -28,8 +28,20 @@ const createArraySlotMachine = () => {
   return Array.from({ length: 3 }, () => randomArrayValue(arraySymbols));
 }
 
-exports.sortMachine = function(req, res) {
-  findUserAndMinusCoins(req, -1, getCoinsHandler(req, res, { sortMachine: createArraySlotMachine() }));
+exports.sortMachine = async function(req, res) {
+  const token = req.headers.authorization;
+  const tokenRes = await verifyToken(token);
+  findUser(tokenRes.email)
+  .then(user => {
+      if(user) {
+        const sortMachine = createArraySlotMachine();
+        const prize = checkPrize(sortMachine);
+        const oldCoins = user.coins - 1;
+        findUserAndUpdateCoins(res, tokenRes.email, (user.coins + prize - 1), { sortMachine, prize, oldCoins });
+      }
+      else returnErrorRequest(res, 404, "Error no servidor.");
+  })
+  .catch((error) => { res.status(400).json({statusCode: "400", error: "Not Possible to update coins." }) });
 };
 
 const findUserAndRespond = (res, email, objPlus = {}) => {
@@ -42,7 +54,7 @@ const findUserAndRespond = (res, email, objPlus = {}) => {
   } );
 }
 
-const findUserAndUpdateCoins = (res, email, coins) => {
+const findUserAndUpdateCoins = (res, email, coins, objPlus = {}) => {
   UserModel.updateOne(
     { email },
     { $set: { coins } },
@@ -50,23 +62,26 @@ const findUserAndUpdateCoins = (res, email, coins) => {
   )
   .then(data => {
       console.log(data);
-      findUserAndRespond(res, email);
+      findUserAndRespond(res, email, objPlus);
   });
 }
 
-const findUserAndMinusCoins = (req, someNumber, fun = () => null) => {
-  const token = req.headers.authorization;
-  verifyToken(token)
-    .then(tokenRes => 
-      UserModel.updateOne(
-        { email: tokenRes.email, coins: { $gt: 0 } },
-        { $inc: { coins: someNumber } },
-        { upsert: true }
-      )
-      .then(data => {
-        console.log(data);
-        fun();
-      }))
-    .catch((error) => { res.status(401).json({statusCode: "401", error: "Token not ok." }) });
-  
+const findUserAndMinusCoins = (email, someNumber) => {
+  console.log('findUserAndMinusCoins', email, someNumber);
+  return UserModel.updateOne(
+    { email, coins: { $gt: 0 } },
+    { $inc: { coins: someNumber } },
+    { new: true },
+  )
+}
+
+const checkPrize = (sortMachineArray) => {
+  console.log('checkPrize', sortMachineArray);
+  return sortMachineArray.filter(item => item === 'cherry').length === 3 ? 50 :
+          sortMachineArray.filter(item => item === 'cherry').length === 2 ? 40 :
+          sortMachineArray.filter(item => item === 'apple').length === 3 ? 20 :
+          sortMachineArray.filter(item => item === 'apple').length === 2 ? 10 :
+          sortMachineArray.filter(item => item === 'banana').length === 3 ? 15 :
+          sortMachineArray.filter(item => item === 'banana').length === 2 ? 5 :
+          sortMachineArray.filter(item => item === 'lemon').length === 3 ? 3 : 0;
 }

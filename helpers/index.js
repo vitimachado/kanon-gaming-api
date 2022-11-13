@@ -27,3 +27,9 @@ exports.verifyTokenExpirated = (decoded) => {
   console.log('verifyTokenExpirated', decoded, decoded.exp * 1000 < new Date().getTime());
   return decoded.exp * 1000 < new Date().getTime();
 }
+
+exports.randomArrayValue = (array) => {
+  const random = Math.floor(Math.random() * array.length);
+  console.log(random, array[random]);
+  return array[random];
+}

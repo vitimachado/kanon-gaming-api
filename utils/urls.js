@@ -23,10 +23,17 @@ const apiUrlsCountries = {
   allCountries: `${apiUBaseUrlCountries}/all/`,
 };
 
+const slotMachineItems = {
+  cherry: 'cherry',
+  apple: 'apple',
+  banana: 'banana',
+  lemon: 'cherry',
+};
 
 module.exports = {
   urlsCountries,
   urlsUsers,
   urlsSlotMachine,
+  slotMachineItems,
   apiUrlsCountries
 };

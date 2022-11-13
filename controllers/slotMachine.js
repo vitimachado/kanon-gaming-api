@@ -1,8 +1,16 @@
 const { hashPassword, compareHash, generateToken, verifyToken, randomArrayValue } = require('../helpers');
 const { UserModel } = require('../models/user');
 const { returnErrorRequest, returnSuccess } = require('../utils/httpUtil');
+const { slotMachineItems } = require('../utils/urls');
 const { findUser } = require('./users');
 
+/**
+ *  Method to handle get the coins of user.
+ *
+ * @param {HTTPResponse} req Request of HTTP query.
+ * @param {HTTPResponse} res Response of HTTP query.
+ * @param {Object} [objPlus={}] Object to concat on the response data object.
+ */
 const getCoinsHandler = (req, res, objPlus = {}) => {
   const token = req.headers.authorization;
   verifyToken(token)
@@ -10,10 +18,22 @@ const getCoinsHandler = (req, res, objPlus = {}) => {
     .catch((error) => { res.status(401).json({statusCode: "401", error: "Token not ok." }) });
 };
 
+/**
+ *  Method to get the coins of user.
+ *
+ * @param {HTTPResponse} req Request of HTTP query.
+ * @param {HTTPResponse} res Response of HTTP query.
+ */
 exports.getCoins = function(req, res) {
   getCoinsHandler(req, res);
 };
 
+/**
+ *  Method to set the user coins.
+ *
+ * @param {HTTPResponse} req Request of HTTP query.
+ * @param {HTTPResponse} res Response of HTTP query.
+ */
 exports.setCoins = function(req, res) {
   const token = req.headers.authorization;
   const coins = req.query.coins;
@@ -23,11 +43,27 @@ exports.setCoins = function(req, res) {
   
 };
 
+/**
+ * Method to create Array with random values of slot machine.
+ *
+ * @return {String[]} Array with random values of slot machine.
+ */
 const createArraySlotMachine = () => {
-  const arraySymbols = ['apple', 'apple', 'banana', 'lemon'];
+  const arraySymbols = [
+    slotMachineItems.cherry,
+    slotMachineItems.apple,
+    slotMachineItems.banana,
+    slotMachineItems.lemon
+  ];
   return Array.from({ length: 3 }, () => randomArrayValue(arraySymbols));
 }
 
+/**
+ *  Method to sort items of slot machine and return.
+ *
+ * @param {HTTPResponse} req Request of HTTP query.
+ * @param {HTTPResponse} res Response of HTTP query.
+ */
 exports.sortMachine = async function(req, res) {
   const token = req.headers.authorization;
   const tokenRes = await verifyToken(token);
@@ -44,6 +80,13 @@ exports.sortMachine = async function(req, res) {
   .catch((error) => { res.status(400).json({statusCode: "400", error: "Not Possible to update coins." }) });
 };
 
+/**
+ *  Method to find the user and respond.
+ *
+ * @param {HTTPResponse} res Response of HTTP query.
+ * @param {string} email  Email of user.
+ * @param {Object} [objPlus={}] Object to concat on the response data object.
+ */
 const findUserAndRespond = (res, email, objPlus = {}) => {
   findUser(email)
   .then(user => {
@@ -54,6 +97,14 @@ const findUserAndRespond = (res, email, objPlus = {}) => {
   } );
 }
 
+/**
+ *  Method to find the user and increment the coins.
+ *
+ * @param {HTTPResponse} res Response of HTTP query.
+ * @param {string} email  Email of user.
+ * @param {number} coins  Coins of user.
+ * @param {Object} [objPlus={}] Object to concat on the response data object.
+ */
 const findUserAndUpdateCoins = (res, email, coins, objPlus = {}) => {
   UserModel.updateOne(
     { email },
@@ -66,7 +117,14 @@ const findUserAndUpdateCoins = (res, email, coins, objPlus = {}) => {
   });
 }
 
-const findUserAndMinusCoins = (email, someNumber) => {
+/**
+ * Method to find the user and increment the coins
+ *
+ * @param {string} email Email of user.
+ * @param {number} someNumber Number to increment the coins
+ * @return {Promise} Return Promises with the respond of update.
+ */
+const findUserAndIncCoins = (email, someNumber) => {
   return UserModel.updateOne(
     { email, coins: { $gt: 0 } },
     { $inc: { coins: someNumber } },
@@ -74,13 +132,18 @@ const findUserAndMinusCoins = (email, someNumber) => {
   )
 }
 
+/**
+ *  Calculate the prize coins return.
+ *
+ * @param {String[]} sortMachineArray Array the strings with the sort items.
+ * @return {Number} Numbers of coins to return.
+ */
 const checkPrize = (sortMachineArray) => {
-  console.log('checkPrize', sortMachineArray);
-  return sortMachineArray.filter(item => item === 'cherry').length === 3 ? 50 :
-          sortMachineArray.filter(item => item === 'cherry').length === 2 ? 40 :
-          sortMachineArray.filter(item => item === 'apple').length === 3 ? 20 :
-          sortMachineArray.filter(item => item === 'apple').length === 2 ? 10 :
-          sortMachineArray.filter(item => item === 'banana').length === 3 ? 15 :
-          sortMachineArray.filter(item => item === 'banana').length === 2 ? 5 :
-          sortMachineArray.filter(item => item === 'lemon').length === 3 ? 3 : 0;
+  return sortMachineArray.filter(item => item === slotMachineItems.cherry).length === 3 ? 50 :
+          sortMachineArray.filter(item => item === slotMachineItems.cherry).length === 2 ? 40 :
+          sortMachineArray.filter(item => item === slotMachineItems.apple).length === 3 ? 20 :
+          sortMachineArray.filter(item => item === slotMachineItems.apple).length === 2 ? 10 :
+          sortMachineArray.filter(item => item === slotMachineItems.banana).length === 3 ? 15 :
+          sortMachineArray.filter(item => item === slotMachineItems.banana).length === 2 ? 5 :
+          sortMachineArray.filter(item => item === slotMachineItems.lemon).length === 3 ? 3 : 0;
 }

@@ -1,7 +1,7 @@
-var express = require('express');
-var consign = require('consign');
-var bodyParser = require('body-parser');
-var cors = require('cors');
+const express = require('express');
+const consign = require('consign');
+const bodyParser = require('body-parser');
+const cors = require('cors');
 const authMiddleware = require("../middlewares/auth");
 
 module.exports = function(){

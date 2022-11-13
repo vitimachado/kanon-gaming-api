@@ -4,7 +4,6 @@ const { returnSuccess } = require('../utils/httpUtil');
 const { apiUrlsCountries } = require('../utils/urls');
 
 exports.getAllCountries = function(req, res) {
-  console.log('getAllCountries');
   axios.get(apiUrlsCountries.allCountries)
   .then(response => {
     const countryData = response.data;
@@ -17,7 +16,6 @@ exports.getAllCountries = function(req, res) {
 };
 
 exports.countryByName = function(req, res) {
-  console.log('countryByName', req.query.countryName);
   axios.get(apiUrlsCountries.countryByName + req.query.countryName)
   .then(response => {
     const countryData = response.data;
@@ -29,8 +27,7 @@ exports.countryByName = function(req, res) {
   });
 };
 
-exports.countriesByNames = function(req, res) {    
-    console.log('countriesByNames', req.body);
+exports.countriesByNames = function(req, res) {
     const countryNames = req.body.countryNames
     axios.get(apiUrlsCountries.allCountries)
     .then(response => {

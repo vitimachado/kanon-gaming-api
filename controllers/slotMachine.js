@@ -67,7 +67,6 @@ const findUserAndUpdateCoins = (res, email, coins, objPlus = {}) => {
 }
 
 const findUserAndMinusCoins = (email, someNumber) => {
-  console.log('findUserAndMinusCoins', email, someNumber);
   return UserModel.updateOne(
     { email, coins: { $gt: 0 } },
     { $inc: { coins: someNumber } },

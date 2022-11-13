@@ -20,7 +20,6 @@ module.exports = async (req, res, next) => {
   try {
     const decoded = await promisify(jwt.verify)(authHeader, "secret150");
 
-    console.log('rrrrrrreeeeeeesssssssssss+', decoded, decoded.exp * 1000 < new Date().getTime())
     if (verifyTokenExpirated(decoded)) {
       return returnErrorRequest(res, 401, "Token expired");
     }

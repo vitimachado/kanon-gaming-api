@@ -8,7 +8,6 @@ exports.hashPassword = (password) => {
 }
 
 exports.compareHash = (hash, password) => {
-  console.log('compareHash', hash, password)
   return bcrypt.compareSync(password, hash);//(hash, password);
 }
 
@@ -19,12 +18,10 @@ exports.generateToken = (_id, email) => {
 }
 
 exports.verifyToken = async(token) => {
-  console.log('verifyToken', token);
   return await promisify(jwt.verify)(token, "secret150")
 }
 
 exports.verifyTokenExpirated = (decoded) => {
-  console.log('verifyTokenExpirated', decoded, decoded.exp * 1000 < new Date().getTime());
   return decoded.exp * 1000 < new Date().getTime();
 }
 

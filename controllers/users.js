@@ -6,7 +6,6 @@ exports.register = async (req, res) => {
     const { name, email, password } = req.body.data;
 
     const user = await UserModel.findOne({ email }).exec();
-    console.log('register', user);
     if(user != null) {
         res.status(409).json({statusCode: "409", error: "This email is already exists." });
         return;
@@ -16,9 +15,13 @@ exports.register = async (req, res) => {
     .then(hash => {
         console.log('register hash', hash);
         UserModel.create({ name, email, password: hash})
-        .then(data => {
-            console.log(data);
-            res.status(200).json({statusCode: "200", data });
+        .then(user => {
+            console.log(user);
+            returnSuccess(res, 200, {
+              user: {
+                coins: user.coins, email: user.email, name: user.name,
+              },
+            });
         });
     } )
     .catch(err => {
@@ -34,7 +37,6 @@ exports.authenticate = function(req, res) {
 
 exports.getUserByToken = function(req, res) {
     const token = req.headers.authorization;
-    console.log('\n\n\ngetUserByToken 1', req.headers.authorization);
     verifyToken(token)
     .then(tokenRes => findUserAndRespond(res, tokenRes.email, null, true))
     .catch((error) => { res.status(401).json({statusCode: "401", error: "Token not ok." }) });

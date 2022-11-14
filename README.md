@@ -1,4 +1,4 @@
-# React Slot Machine Test
+# React Slot Machine Test Api
 
 Project made in NodeJS and using MongoDB.
 
